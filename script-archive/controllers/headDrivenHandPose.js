@@ -14,11 +14,7 @@ var mapping = Controller.newMapping(MAPPING_NAME);
 
 mapping.from(function() {
     if (!Controller.getValue(Controller.Standard.X)) {
-        print("not X");
-        var pose = {
-            valid: false
-        };
-        return pose;
+        return { valid: false };
     }
 
     var position = MyAvatar.getHeadPosition();
