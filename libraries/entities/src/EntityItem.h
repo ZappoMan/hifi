@@ -483,6 +483,12 @@ protected:
         EntityPropertyID propertyID;
         std::function<T(const EntityItem&)> getter;
         std::function<void(EntityItem&, T)> setter;
+
+        // I'd like to look for a solution that allows these to be more automatically managed
+        //static std::vector<EntityProperty<T>*> _properties;
+        //template <class T>
+        //std::vector<EntityItem::EntityProperty<T>*> EntityItem::EntityProperty<T>::_properties;
+
     };
 
     #define SUPPORT_TYPED_PROPERTIES(T) std::vector<EntityProperty<T>*> _##T##Properties;
@@ -690,5 +696,7 @@ protected:
     quint64 _lastUpdatedQueryAACubeTimestamp { 0 };
 
 };
+
+
 
 #endif // hifi_EntityItem_h

@@ -37,6 +37,7 @@
 #include "EntitySimulation.h"
 #include "EntityDynamicFactoryInterface.h"
 
+
 Q_DECLARE_METATYPE(EntityItemPointer);
 int entityItemPointernMetaTypeId = qRegisterMetaType<EntityItemPointer>();
 
@@ -76,6 +77,18 @@ EntityItem::~EntityItem() {
 EntityPropertyFlags EntityItem::getEntityProperties(EncodeBitstreamParams& params) const {
     EntityPropertyFlags requestedProperties;
 
+    REQUEST_ALL_TYPED_PROPERTIES(float);
+    REQUEST_ALL_TYPED_PROPERTIES(vec3);
+    REQUEST_ALL_TYPED_PROPERTIES(QString);
+    REQUEST_ALL_TYPED_PROPERTIES(quint64);
+    REQUEST_ALL_TYPED_PROPERTIES(uint8_t);
+    REQUEST_ALL_TYPED_PROPERTIES(bool);
+    REQUEST_ALL_TYPED_PROPERTIES(quint32);
+    REQUEST_ALL_TYPED_PROPERTIES(QByteArray);
+    REQUEST_ALL_TYPED_PROPERTIES(QUuid);
+    REQUEST_ALL_TYPED_PROPERTIES(quint16);
+    REQUEST_ALL_TYPED_PROPERTIES(AACube);
+
     requestedProperties += PROP_SIMULATION_OWNER;
     requestedProperties += PROP_POSITION;
     requestedProperties += PROP_ROTATION;
@@ -83,50 +96,14 @@ EntityPropertyFlags EntityItem::getEntityProperties(EncodeBitstreamParams& param
     requestedProperties += PROP_ANGULAR_VELOCITY;
     requestedProperties += PROP_ACCELERATION;
 
-    requestedProperties += PROP_DIMENSIONS;
-    requestedProperties += PROP_DENSITY;
-    requestedProperties += PROP_GRAVITY;
-    requestedProperties += PROP_DAMPING;
-    requestedProperties += PROP_RESTITUTION;
-    requestedProperties += PROP_FRICTION;
-    requestedProperties += PROP_LIFETIME;
-    requestedProperties += PROP_SCRIPT;
-    requestedProperties += PROP_SCRIPT_TIMESTAMP;
     requestedProperties += PROP_SERVER_SCRIPTS;
-    requestedProperties += PROP_COLLISION_SOUND_URL;
-    requestedProperties += PROP_REGISTRATION_POINT;
-    requestedProperties += PROP_ANGULAR_DAMPING;
-    requestedProperties += PROP_VISIBLE;
-    requestedProperties += PROP_COLLISIONLESS;
-    requestedProperties += PROP_COLLISION_MASK;
-    requestedProperties += PROP_DYNAMIC;
-    requestedProperties += PROP_LOCKED;
-    requestedProperties += PROP_USER_DATA;
 
-    // Certifiable properties
-    requestedProperties += PROP_ITEM_NAME;
-    requestedProperties += PROP_ITEM_DESCRIPTION;
-    requestedProperties += PROP_ITEM_CATEGORIES;
-    requestedProperties += PROP_ITEM_ARTIST;
-    requestedProperties += PROP_ITEM_LICENSE;
-    requestedProperties += PROP_LIMITED_RUN;
-    requestedProperties += PROP_MARKETPLACE_ID;
-    requestedProperties += PROP_EDITION_NUMBER;
-    requestedProperties += PROP_ENTITY_INSTANCE_NUMBER;
-    requestedProperties += PROP_CERTIFICATE_ID;
-
-    requestedProperties += PROP_NAME;
-    requestedProperties += PROP_HREF;
-    requestedProperties += PROP_DESCRIPTION;
-    requestedProperties += PROP_ACTION_DATA;
     requestedProperties += PROP_PARENT_ID;
     requestedProperties += PROP_PARENT_JOINT_INDEX;
     requestedProperties += PROP_QUERY_AA_CUBE;
 
     requestedProperties += PROP_CLIENT_ONLY;
     requestedProperties += PROP_OWNING_AVATAR_ID;
-
-    requestedProperties += PROP_LAST_EDITED_BY;
 
     return requestedProperties;
 }
@@ -254,52 +231,7 @@ OctreeElement::AppendState EntityItem::appendEntityData(OctreePacketData* packet
         APPEND_ALL_TYPED_PROPERTIES(quint16);
         APPEND_ALL_TYPED_PROPERTIES(AACube);
 
-
-        /*
-        APPEND_ENTITY_PROPERTY(PROP_DIMENSIONS, getDimensions());
-        APPEND_ENTITY_PROPERTY(PROP_DENSITY, getDensity());
-        APPEND_ENTITY_PROPERTY(PROP_GRAVITY, getGravity());
-        APPEND_ENTITY_PROPERTY(PROP_DAMPING, getDamping());
-        APPEND_ENTITY_PROPERTY(PROP_RESTITUTION, getRestitution());
-        APPEND_ENTITY_PROPERTY(PROP_FRICTION, getFriction());
-        APPEND_ENTITY_PROPERTY(PROP_LIFETIME, getLifetime());
-        APPEND_ENTITY_PROPERTY(PROP_SCRIPT, getScript());
-        APPEND_ENTITY_PROPERTY(PROP_SCRIPT_TIMESTAMP, getScriptTimestamp());
-        */
-
         APPEND_ENTITY_PROPERTY(PROP_SERVER_SCRIPTS, getServerScripts());
-
-        /*
-        APPEND_ENTITY_PROPERTY(PROP_REGISTRATION_POINT, getRegistrationPoint());
-        APPEND_ENTITY_PROPERTY(PROP_ANGULAR_DAMPING, getAngularDamping());
-        APPEND_ENTITY_PROPERTY(PROP_VISIBLE, getVisible());
-        APPEND_ENTITY_PROPERTY(PROP_COLLISIONLESS, getCollisionless());
-        APPEND_ENTITY_PROPERTY(PROP_COLLISION_MASK, getCollisionMask());
-        APPEND_ENTITY_PROPERTY(PROP_DYNAMIC, getDynamic());
-        APPEND_ENTITY_PROPERTY(PROP_LOCKED, getLocked());
-        APPEND_ENTITY_PROPERTY(PROP_USER_DATA, getUserData());
-
-        // Certifiable Properties
-        APPEND_ENTITY_PROPERTY(PROP_MARKETPLACE_ID, getMarketplaceID());
-        APPEND_ENTITY_PROPERTY(PROP_ITEM_NAME, getItemName());
-        APPEND_ENTITY_PROPERTY(PROP_ITEM_DESCRIPTION, getItemDescription());
-        APPEND_ENTITY_PROPERTY(PROP_ITEM_CATEGORIES, getItemCategories());
-        APPEND_ENTITY_PROPERTY(PROP_ITEM_ARTIST, getItemArtist());
-        APPEND_ENTITY_PROPERTY(PROP_ITEM_LICENSE, getItemLicense());
-        APPEND_ENTITY_PROPERTY(PROP_LIMITED_RUN, getLimitedRun());
-        APPEND_ENTITY_PROPERTY(PROP_EDITION_NUMBER, getEditionNumber());
-        APPEND_ENTITY_PROPERTY(PROP_ENTITY_INSTANCE_NUMBER, getEntityInstanceNumber());
-        APPEND_ENTITY_PROPERTY(PROP_CERTIFICATE_ID, getCertificateID());
-
-        APPEND_ENTITY_PROPERTY(PROP_NAME, getName());
-        APPEND_ENTITY_PROPERTY(PROP_COLLISION_SOUND_URL, getCollisionSoundURL());
-        APPEND_ENTITY_PROPERTY(PROP_HREF, getHref());
-        APPEND_ENTITY_PROPERTY(PROP_DESCRIPTION, getDescription());
-        APPEND_ENTITY_PROPERTY(PROP_ACTION_DATA, getDynamicData());
-
-        APPEND_ENTITY_PROPERTY(PROP_LAST_EDITED_BY, getLastEditedBy());
-        */
-
 
         // convert AVATAR_SELF_ID to actual sessionUUID.
         QUuid actualParentID = getParentID();
@@ -810,20 +742,6 @@ int EntityItem::readEntityDataFromBuffer(const unsigned char* data, int bytesLef
     READ_ALL_TYPED_PROPERTIES(quint16);
     READ_ALL_TYPED_PROPERTIES(AACube);
 
-    /*
-    READ_ENTITY_PROPERTY(PROP_DIMENSIONS, glm::vec3, setDimensions);
-    READ_ENTITY_PROPERTY(PROP_DENSITY, float, setDensity);
-    READ_ENTITY_PROPERTY(PROP_GRAVITY, glm::vec3, setGravity);
-
-    READ_ENTITY_PROPERTY(PROP_DAMPING, float, setDamping);
-    READ_ENTITY_PROPERTY(PROP_RESTITUTION, float, setRestitution);
-    READ_ENTITY_PROPERTY(PROP_FRICTION, float, setFriction);
-    READ_ENTITY_PROPERTY(PROP_LIFETIME, float, setLifetime);
-    READ_ENTITY_PROPERTY(PROP_SCRIPT, QString, setScript);
-    READ_ENTITY_PROPERTY(PROP_SCRIPT_TIMESTAMP, quint64, setScriptTimestamp);
-    */
-
-
     {
         // We use this scope to work around an issue stopping server script changes
         // from being received by an entity script server running a script that continously updates an entity.
@@ -835,37 +753,6 @@ int EntityItem::readEntityDataFromBuffer(const unsigned char* data, int bytesLef
 
         READ_ENTITY_PROPERTY(PROP_SERVER_SCRIPTS, QString, setServerScripts);
     }
-
-    /*
-    READ_ENTITY_PROPERTY(PROP_REGISTRATION_POINT, glm::vec3, setRegistrationPoint);
-    READ_ENTITY_PROPERTY(PROP_ANGULAR_DAMPING, float, setAngularDamping);
-    READ_ENTITY_PROPERTY(PROP_VISIBLE, bool, setVisible);
-    READ_ENTITY_PROPERTY(PROP_COLLISIONLESS, bool, setCollisionless);
-    READ_ENTITY_PROPERTY(PROP_COLLISION_MASK, uint8_t, setCollisionMask);
-    READ_ENTITY_PROPERTY(PROP_DYNAMIC, bool, setDynamic);
-    READ_ENTITY_PROPERTY(PROP_LOCKED, bool, setLocked);
-    READ_ENTITY_PROPERTY(PROP_USER_DATA, QString, setUserData);
-
-    READ_ENTITY_PROPERTY(PROP_MARKETPLACE_ID, QString, setMarketplaceID);
-    READ_ENTITY_PROPERTY(PROP_ITEM_NAME, QString, setItemName);
-    READ_ENTITY_PROPERTY(PROP_ITEM_DESCRIPTION, QString, setItemDescription);
-    READ_ENTITY_PROPERTY(PROP_ITEM_CATEGORIES, QString, setItemCategories);
-    READ_ENTITY_PROPERTY(PROP_ITEM_ARTIST, QString, setItemArtist);
-    READ_ENTITY_PROPERTY(PROP_ITEM_LICENSE, QString, setItemLicense);
-    READ_ENTITY_PROPERTY(PROP_LIMITED_RUN, quint32, setLimitedRun);
-    READ_ENTITY_PROPERTY(PROP_EDITION_NUMBER, quint32, setEditionNumber);
-    READ_ENTITY_PROPERTY(PROP_ENTITY_INSTANCE_NUMBER, quint32, setEntityInstanceNumber);
-    READ_ENTITY_PROPERTY(PROP_CERTIFICATE_ID, QString, setCertificateID);
-
-    READ_ENTITY_PROPERTY(PROP_NAME, QString, setName);
-    READ_ENTITY_PROPERTY(PROP_COLLISION_SOUND_URL, QString, setCollisionSoundURL);
-    READ_ENTITY_PROPERTY(PROP_HREF, QString, setHref);
-    READ_ENTITY_PROPERTY(PROP_DESCRIPTION, QString, setDescription);
-    READ_ENTITY_PROPERTY(PROP_ACTION_DATA, QByteArray, setDynamicData);
-
-    READ_ENTITY_PROPERTY(PROP_LAST_EDITED_BY, QUuid, setLastEditedBy);
-
-    */
 
 
     {   // parentID and parentJointIndex are also protected by simulation ownership

@@ -441,7 +441,8 @@ inline xColor xColor_convertFromScriptValue(const QScriptValue& v, bool& isValid
 
 
 #define READ_ALL_TYPED_PROPERTIES(T)                                               \
-        for (auto& prop : _##T##Properties) {                                          \
+            /*for (auto& prop : EntityProperty<T>::_properties) {*/ \
+        for (auto& prop : _##T##Properties) { \
             if (propertyFlags.getHasProperty(prop->propertyID)) {                      \
                 T fromBuffer;                                                          \
                 int bytes = OctreePacketData::unpackDataFromBytes(dataAt, fromBuffer); \
@@ -455,8 +456,15 @@ inline xColor xColor_convertFromScriptValue(const QScriptValue& v, bool& isValid
         }
 
 #define APPEND_ALL_TYPED_PROPERTIES(T) \
+            /*for (auto& prop : EntityProperty<T>::_properties) {*/ \
             for (auto& prop : _##T##Properties) { \
                 APPEND_ENTITY_PROPERTY(prop->propertyID, prop->getter(*this)); \
+            }
+
+#define REQUEST_ALL_TYPED_PROPERTIES(T) \
+            /*for (auto& prop : EntityProperty<T>::_properties) {*/ \
+            for (auto& prop : _##T##Properties) { \
+                requestedProperties += prop->propertyID; \
             }
 
 #endif // hifi_EntityItemPropertiesMacros_h
