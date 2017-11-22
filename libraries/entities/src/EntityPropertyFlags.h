@@ -14,7 +14,7 @@
 
 #include <PropertyFlags.h>
 
-enum EntityPropertyList {
+typedef enum EntityPropertyList {
     PROP_PAGED_PROPERTY,
     PROP_CUSTOM_PROPERTIES_INCLUDED,
 
@@ -264,7 +264,7 @@ enum EntityPropertyList {
     PROP_EMITTING_PARTICLES = PROP_ANIMATION_PLAYING,
 
     // WARNING!!! DO NOT ADD PROPS_xxx here unless you really really meant to.... Add them UP above
-};
+} EntityPropertyID;
 
 typedef PropertyFlags<EntityPropertyList> EntityPropertyFlags;
 

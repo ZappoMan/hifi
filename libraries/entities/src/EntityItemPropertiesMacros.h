@@ -438,4 +438,25 @@ inline xColor xColor_convertFromScriptValue(const QScriptValue& v, bool& isValid
         D << "  " << #n << ":" << P.get##N() << x << "\n";      \
     }
 
+
+
+#define READ_ALL_TYPED_PROPERTIES(T)                                               \
+        for (auto& prop : _##T##Properties) {                                          \
+            if (propertyFlags.getHasProperty(prop->propertyID)) {                      \
+                T fromBuffer;                                                          \
+                int bytes = OctreePacketData::unpackDataFromBytes(dataAt, fromBuffer); \
+                dataAt += bytes;                                                       \
+                bytesRead += bytes;                                                    \
+                if (overwriteLocalData) {                                              \
+                    prop->setter(*this, fromBuffer);                                   \
+                }                                                                      \
+                somethingChanged = true;                                               \
+            }                                                                          \
+        }
+
+#define APPEND_ALL_TYPED_PROPERTIES(T) \
+            for (auto& prop : _##T##Properties) { \
+                APPEND_ENTITY_PROPERTY(prop->propertyID, prop->getter(*this)); \
+            }
+
 #endif // hifi_EntityItemPropertiesMacros_h

@@ -241,6 +241,21 @@ OctreeElement::AppendState EntityItem::appendEntityData(OctreePacketData* packet
         APPEND_ENTITY_PROPERTY(PROP_ANGULAR_VELOCITY, getLocalAngularVelocity());
         APPEND_ENTITY_PROPERTY(PROP_ACCELERATION, getAcceleration());
 
+
+        APPEND_ALL_TYPED_PROPERTIES(float);
+        APPEND_ALL_TYPED_PROPERTIES(vec3);
+        APPEND_ALL_TYPED_PROPERTIES(QString);
+        APPEND_ALL_TYPED_PROPERTIES(quint64);
+        APPEND_ALL_TYPED_PROPERTIES(uint8_t);
+        APPEND_ALL_TYPED_PROPERTIES(bool);
+        APPEND_ALL_TYPED_PROPERTIES(quint32);
+        APPEND_ALL_TYPED_PROPERTIES(QByteArray);
+        APPEND_ALL_TYPED_PROPERTIES(QUuid);
+        APPEND_ALL_TYPED_PROPERTIES(quint16);
+        APPEND_ALL_TYPED_PROPERTIES(AACube);
+
+
+        /*
         APPEND_ENTITY_PROPERTY(PROP_DIMENSIONS, getDimensions());
         APPEND_ENTITY_PROPERTY(PROP_DENSITY, getDensity());
         APPEND_ENTITY_PROPERTY(PROP_GRAVITY, getGravity());
@@ -250,7 +265,11 @@ OctreeElement::AppendState EntityItem::appendEntityData(OctreePacketData* packet
         APPEND_ENTITY_PROPERTY(PROP_LIFETIME, getLifetime());
         APPEND_ENTITY_PROPERTY(PROP_SCRIPT, getScript());
         APPEND_ENTITY_PROPERTY(PROP_SCRIPT_TIMESTAMP, getScriptTimestamp());
+        */
+
         APPEND_ENTITY_PROPERTY(PROP_SERVER_SCRIPTS, getServerScripts());
+
+        /*
         APPEND_ENTITY_PROPERTY(PROP_REGISTRATION_POINT, getRegistrationPoint());
         APPEND_ENTITY_PROPERTY(PROP_ANGULAR_DAMPING, getAngularDamping());
         APPEND_ENTITY_PROPERTY(PROP_VISIBLE, getVisible());
@@ -278,6 +297,10 @@ OctreeElement::AppendState EntityItem::appendEntityData(OctreePacketData* packet
         APPEND_ENTITY_PROPERTY(PROP_DESCRIPTION, getDescription());
         APPEND_ENTITY_PROPERTY(PROP_ACTION_DATA, getDynamicData());
 
+        APPEND_ENTITY_PROPERTY(PROP_LAST_EDITED_BY, getLastEditedBy());
+        */
+
+
         // convert AVATAR_SELF_ID to actual sessionUUID.
         QUuid actualParentID = getParentID();
         if (actualParentID == AVATAR_SELF_ID) {
@@ -288,7 +311,6 @@ OctreeElement::AppendState EntityItem::appendEntityData(OctreePacketData* packet
 
         APPEND_ENTITY_PROPERTY(PROP_PARENT_JOINT_INDEX, getParentJointIndex());
         APPEND_ENTITY_PROPERTY(PROP_QUERY_AA_CUBE, getQueryAACube());
-        APPEND_ENTITY_PROPERTY(PROP_LAST_EDITED_BY, getLastEditedBy());
 
         appendSubclassData(packetData, params, entityTreeElementExtraEncodeData,
                                 requestedProperties,
@@ -776,6 +798,19 @@ int EntityItem::readEntityDataFromBuffer(const unsigned char* data, int bytesLef
         READ_ENTITY_PROPERTY(PROP_ACCELERATION, glm::vec3, customSetAcceleration);
     }
 
+    READ_ALL_TYPED_PROPERTIES(float);
+    READ_ALL_TYPED_PROPERTIES(vec3);
+    READ_ALL_TYPED_PROPERTIES(QString);
+    READ_ALL_TYPED_PROPERTIES(quint64);
+    READ_ALL_TYPED_PROPERTIES(uint8_t);
+    READ_ALL_TYPED_PROPERTIES(bool);
+    READ_ALL_TYPED_PROPERTIES(quint32);
+    READ_ALL_TYPED_PROPERTIES(QByteArray);
+    READ_ALL_TYPED_PROPERTIES(QUuid);
+    READ_ALL_TYPED_PROPERTIES(quint16);
+    READ_ALL_TYPED_PROPERTIES(AACube);
+
+    /*
     READ_ENTITY_PROPERTY(PROP_DIMENSIONS, glm::vec3, setDimensions);
     READ_ENTITY_PROPERTY(PROP_DENSITY, float, setDensity);
     READ_ENTITY_PROPERTY(PROP_GRAVITY, glm::vec3, setGravity);
@@ -786,6 +821,8 @@ int EntityItem::readEntityDataFromBuffer(const unsigned char* data, int bytesLef
     READ_ENTITY_PROPERTY(PROP_LIFETIME, float, setLifetime);
     READ_ENTITY_PROPERTY(PROP_SCRIPT, QString, setScript);
     READ_ENTITY_PROPERTY(PROP_SCRIPT_TIMESTAMP, quint64, setScriptTimestamp);
+    */
+
 
     {
         // We use this scope to work around an issue stopping server script changes
@@ -799,8 +836,8 @@ int EntityItem::readEntityDataFromBuffer(const unsigned char* data, int bytesLef
         READ_ENTITY_PROPERTY(PROP_SERVER_SCRIPTS, QString, setServerScripts);
     }
 
+    /*
     READ_ENTITY_PROPERTY(PROP_REGISTRATION_POINT, glm::vec3, setRegistrationPoint);
-
     READ_ENTITY_PROPERTY(PROP_ANGULAR_DAMPING, float, setAngularDamping);
     READ_ENTITY_PROPERTY(PROP_VISIBLE, bool, setVisible);
     READ_ENTITY_PROPERTY(PROP_COLLISIONLESS, bool, setCollisionless);
@@ -826,6 +863,11 @@ int EntityItem::readEntityDataFromBuffer(const unsigned char* data, int bytesLef
     READ_ENTITY_PROPERTY(PROP_DESCRIPTION, QString, setDescription);
     READ_ENTITY_PROPERTY(PROP_ACTION_DATA, QByteArray, setDynamicData);
 
+    READ_ENTITY_PROPERTY(PROP_LAST_EDITED_BY, QUuid, setLastEditedBy);
+
+    */
+
+
     {   // parentID and parentJointIndex are also protected by simulation ownership
         bool oldOverwrite = overwriteLocalData;
         overwriteLocalData = overwriteLocalData && !weOwnSimulation;
@@ -846,7 +888,6 @@ int EntityItem::readEntityDataFromBuffer(const unsigned char* data, int bytesLef
         READ_ENTITY_PROPERTY(PROP_QUERY_AA_CUBE, AACube, customUpdateQueryAACubeFromNetwork);
     }
 
-    READ_ENTITY_PROPERTY(PROP_LAST_EDITED_BY, QUuid, setLastEditedBy);
 
     bytesRead += readEntitySubclassDataFromBuffer(dataAt, (bytesLeftToRead - bytesRead), args,
                                                   propertyFlags, overwriteLocalData, somethingChanged);

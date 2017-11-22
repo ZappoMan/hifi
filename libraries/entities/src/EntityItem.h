@@ -463,6 +463,85 @@ public:
     static void retrieveMarketplacePublicKey();
 
 protected:
+
+    template <class T> 
+    class EntityProperty {
+    public:
+        EntityProperty(
+            std::vector<EntityProperty<T>*>& typedProperties,
+            EntityPropertyID propertyID,
+            std::function<T (const EntityItem&)> getter,
+            std::function<void(EntityItem&, T)> setter
+        ) :
+            propertyID(propertyID),
+            getter(getter),
+            setter(setter)
+        {
+            typedProperties.push_back(this);
+        }
+
+        EntityPropertyID propertyID;
+        std::function<T(const EntityItem&)> getter;
+        std::function<void(EntityItem&, T)> setter;
+    };
+
+    #define SUPPORT_TYPED_PROPERTIES(T) std::vector<EntityProperty<T>*> _##T##Properties;
+
+    SUPPORT_TYPED_PROPERTIES(float);
+    SUPPORT_TYPED_PROPERTIES(vec3);
+    SUPPORT_TYPED_PROPERTIES(QString);
+    SUPPORT_TYPED_PROPERTIES(quint64);
+    SUPPORT_TYPED_PROPERTIES(uint8_t);
+    SUPPORT_TYPED_PROPERTIES(bool);
+    SUPPORT_TYPED_PROPERTIES(quint32);
+    SUPPORT_TYPED_PROPERTIES(QByteArray);
+    SUPPORT_TYPED_PROPERTIES(QUuid);
+    SUPPORT_TYPED_PROPERTIES(quint16);
+    SUPPORT_TYPED_PROPERTIES(AACube);
+
+    #define DEFINE_ENTITYITEM_PROPERTY(I, T, N) \
+        EntityProperty<T> _##I { _##T##Properties, I, &EntityItem::get##N, &EntityItem::set##N };
+
+    DEFINE_ENTITYITEM_PROPERTY(PROP_DIMENSIONS, vec3, Dimensions);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_GRAVITY, vec3, Gravity);
+
+    DEFINE_ENTITYITEM_PROPERTY(PROP_DENSITY, float, Density);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_DAMPING, float, Damping);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_RESTITUTION, float, Restitution);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_FRICTION, float, Friction);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_LIFETIME, float, Lifetime);
+
+    DEFINE_ENTITYITEM_PROPERTY(PROP_SCRIPT, QString, Script);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_SCRIPT_TIMESTAMP, quint64, ScriptTimestamp);
+
+    DEFINE_ENTITYITEM_PROPERTY(PROP_REGISTRATION_POINT, vec3, RegistrationPoint);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_ANGULAR_DAMPING, float, AngularDamping);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_VISIBLE, bool, Visible);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_COLLISIONLESS, bool, Collisionless);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_COLLISION_MASK, uint8_t, CollisionMask);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_DYNAMIC, bool, Dynamic);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_LOCKED, bool, Locked);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_USER_DATA, QString, UserData);
+
+    DEFINE_ENTITYITEM_PROPERTY(PROP_MARKETPLACE_ID, QString, MarketplaceID);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_ITEM_NAME, QString, ItemName);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_ITEM_DESCRIPTION, QString, ItemDescription);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_ITEM_CATEGORIES, QString, ItemCategories);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_ITEM_ARTIST, QString, ItemArtist);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_ITEM_LICENSE, QString, ItemLicense);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_LIMITED_RUN, quint32, LimitedRun);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_EDITION_NUMBER, quint32, EditionNumber);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_ENTITY_INSTANCE_NUMBER, quint32, EntityInstanceNumber);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_CERTIFICATE_ID, QString, CertificateID);
+
+    DEFINE_ENTITYITEM_PROPERTY(PROP_NAME, QString, Name);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_COLLISION_SOUND_URL, QString, CollisionSoundURL);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_HREF, QString, Href);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_DESCRIPTION, QString, Description);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_ACTION_DATA, QByteArray, DynamicData);
+    DEFINE_ENTITYITEM_PROPERTY(PROP_LAST_EDITED_BY, QUuid, LastEditedBy);
+
+
     QHash<ChangeHandlerId, ChangeHandlerCallback> _changeHandlers;
 
     void somethingChangedNotification();
@@ -562,7 +641,7 @@ protected:
     uint32_t _dirtyFlags { 0 };   // things that have changed from EXTERNAL changes (via script or packet) but NOT from simulation
 
     // these backpointers are only ever set/cleared by friends:
-    EntityTreeElementPointer _element; // set by EntityTreeElement
+    EntityTreeElementPointer _element {nullptr}; // set by EntityTreeElement
     void* _physicsInfo { nullptr }; // set by EntitySimulation
     bool _simulated { false }; // set by EntitySimulation
 
