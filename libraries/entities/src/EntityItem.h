@@ -36,6 +36,8 @@
 #include "SimulationFlags.h"
 #include "EntityDynamicInterface.h"
 
+//#include "EntityItemProperties.h"
+
 class EntitySimulation;
 class EntityTreeElement;
 class EntityTreeElementExtraEncodeData;
@@ -187,17 +189,16 @@ public:
     void setLocalRenderAlpha(float localRenderAlpha);
 
     void setDensity(float density);
+    float getDensity() const;
     float computeMass() const;
     void setMass(float mass);
 
-    float getDensity() const;
 
     bool hasVelocity() const { return getWorldVelocity() != ENTITY_ITEM_ZERO_VEC3; }
     bool hasLocalVelocity() const { return getLocalVelocity() != ENTITY_ITEM_ZERO_VEC3; }
 
     glm::vec3 getGravity() const; /// get gravity in meters
     void setGravity(const glm::vec3& value); /// gravity in meters
-    bool hasGravity() const { return getGravity() != ENTITY_ITEM_ZERO_VEC3; }
 
     glm::vec3 getAcceleration() const; /// get acceleration in meters/second/second
     void setAcceleration(const glm::vec3& value); /// acceleration in meters/second/second
@@ -206,15 +207,15 @@ public:
     float getDamping() const;
     void setDamping(float value);
 
-    float getRestitution() const;
-    void setRestitution(float value);
+    //float getRestitution() const;
+    //void setRestitution(float value);
 
-    float getFriction() const;
-    void setFriction(float value);
+    //float getFriction() const;
+    //void setFriction(float value);
 
     // lifetime related properties.
-    float getLifetime() const; /// get the lifetime in seconds for the entity
-    void setLifetime(float value); /// set the lifetime in seconds for the entity
+    //float getLifetime() const; /// get the lifetime in seconds for the entity
+    //void setLifetime(float value); /// set the lifetime in seconds for the entity
 
     quint64 getCreated() const; /// get the created-time in useconds for the entity
     void setCreated(quint64 value); /// set the created-time in useconds for the entity
@@ -470,10 +471,12 @@ protected:
         EntityProperty(
             std::vector<EntityProperty<T>*>& typedProperties,
             EntityPropertyID propertyID,
-            std::function<T (const EntityItem&)> getter,
+            QString propertyName,
+            std::function<T(const EntityItem&)> getter,
             std::function<void(EntityItem&, T)> setter
         ) :
             propertyID(propertyID),
+            propertyName(propertyName),
             getter(getter),
             setter(setter)
         {
@@ -481,6 +484,7 @@ protected:
         }
 
         EntityPropertyID propertyID;
+        QString propertyName;
         std::function<T(const EntityItem&)> getter;
         std::function<void(EntityItem&, T)> setter;
 
@@ -505,47 +509,101 @@ protected:
     SUPPORT_TYPED_PROPERTIES(quint16);
     SUPPORT_TYPED_PROPERTIES(AACube);
 
+
+    #define DEFINE_ENTITYITEM_PROPERTY_CORE(I, T, N) \
+        protected: \
+            T _##N; \
+        private: \
+            EntityProperty<T> _##I { \
+                _##T##Properties, \
+                I, \
+                #N, \
+                &EntityItem::get##N, \
+                &EntityItem::set##N \
+            }; 
+
     #define DEFINE_ENTITYITEM_PROPERTY(I, T, N) \
-        EntityProperty<T> _##I { _##T##Properties, I, &EntityItem::get##N, &EntityItem::set##N };
+        public: \
+            T get##N() const { \
+                T result; \
+                withReadLock([&] { \
+                    result = _##N; \
+                }); \
+                return result; \
+            } \
+            void set##N(T value) { \
+                withWriteLock([&] { \
+                    _##N = value; \
+                }); \
+            } \
+    DEFINE_ENTITYITEM_PROPERTY_CORE(I, T, N)
 
-    DEFINE_ENTITYITEM_PROPERTY(PROP_DIMENSIONS, vec3, Dimensions);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_GRAVITY, vec3, Gravity);
 
-    DEFINE_ENTITYITEM_PROPERTY(PROP_DENSITY, float, Density);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_DAMPING, float, Damping);
+    // TODO:
+    //  - getProperties()
+    //  - setProperties()
+    //       Maybe use QVariant for this, since that is the direction we want to go eventually
+    //       AND we can use string property name for that.
+    //  - Custom setter for the special case READ_XXX
+    //       - in case of PROP_SIMULATION_OWNER, maybe leave it special case....
+    //       - Physics properties... special logic to determine if it should update...
+    //         that logic does have property specific _lastUpdatedXXXXXTimestamp and _lastUpdatedXXXXValue
+    //         it seems like an alternate form of the setter might be possible, OR including in the setter some of this
+    //         logic would work.
+    //       - PROP_SERVER_SCRIPTS seems to have similar logic
+    //       - PARENT/ID/JOINT has logic related to simulation ownership
+    //       - QUERYAACUBE seems like exact same logic as physics... double check
+    //  - Custom getter for APPEND_
+    //       - in case of PROP_SIMULATION_OWNER, maybe leave it special case....
+    //       - in case of PROP_PARENT_ID -- can we just use the getter? And have it write out the proper id for AVATAR_SELF_ID?
+    //
+    //   - implement OPTIONAL common getter/setter templates, since most are identical pattern
+
+
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_DIMENSIONS, vec3, Dimensions);
+
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_GRAVITY, vec3, Gravity);
+
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_DENSITY, float, Density);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_DAMPING, float, Damping);
+
     DEFINE_ENTITYITEM_PROPERTY(PROP_RESTITUTION, float, Restitution);
     DEFINE_ENTITYITEM_PROPERTY(PROP_FRICTION, float, Friction);
     DEFINE_ENTITYITEM_PROPERTY(PROP_LIFETIME, float, Lifetime);
 
-    DEFINE_ENTITYITEM_PROPERTY(PROP_SCRIPT, QString, Script);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_SCRIPT_TIMESTAMP, quint64, ScriptTimestamp);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_SCRIPT, QString, Script);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_SCRIPT_TIMESTAMP, quint64, ScriptTimestamp);
 
-    DEFINE_ENTITYITEM_PROPERTY(PROP_REGISTRATION_POINT, vec3, RegistrationPoint);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_ANGULAR_DAMPING, float, AngularDamping);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_VISIBLE, bool, Visible);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_COLLISIONLESS, bool, Collisionless);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_COLLISION_MASK, uint8_t, CollisionMask);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_DYNAMIC, bool, Dynamic);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_LOCKED, bool, Locked);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_USER_DATA, QString, UserData);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_REGISTRATION_POINT, vec3, RegistrationPoint);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ANGULAR_DAMPING, float, AngularDamping);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_VISIBLE, bool, Visible);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_COLLISIONLESS, bool, Collisionless);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_COLLISION_MASK, uint8_t, CollisionMask);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_DYNAMIC, bool, Dynamic);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_LOCKED, bool, Locked);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_USER_DATA, QString, UserData);
 
-    DEFINE_ENTITYITEM_PROPERTY(PROP_MARKETPLACE_ID, QString, MarketplaceID);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_ITEM_NAME, QString, ItemName);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_ITEM_DESCRIPTION, QString, ItemDescription);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_ITEM_CATEGORIES, QString, ItemCategories);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_ITEM_ARTIST, QString, ItemArtist);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_ITEM_LICENSE, QString, ItemLicense);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_LIMITED_RUN, quint32, LimitedRun);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_EDITION_NUMBER, quint32, EditionNumber);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_ENTITY_INSTANCE_NUMBER, quint32, EntityInstanceNumber);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_CERTIFICATE_ID, QString, CertificateID);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_MARKETPLACE_ID, QString, MarketplaceID);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ITEM_NAME, QString, ItemName);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ITEM_DESCRIPTION, QString, ItemDescription);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ITEM_CATEGORIES, QString, ItemCategories);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ITEM_ARTIST, QString, ItemArtist);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ITEM_LICENSE, QString, ItemLicense);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_LIMITED_RUN, quint32, LimitedRun);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_EDITION_NUMBER, quint32, EditionNumber);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ENTITY_INSTANCE_NUMBER, quint32, EntityInstanceNumber);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_CERTIFICATE_ID, QString, CertificateID);
 
-    DEFINE_ENTITYITEM_PROPERTY(PROP_NAME, QString, Name);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_COLLISION_SOUND_URL, QString, CollisionSoundURL);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_HREF, QString, Href);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_DESCRIPTION, QString, Description);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_ACTION_DATA, QByteArray, DynamicData);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_LAST_EDITED_BY, QUuid, LastEditedBy);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_NAME, QString, Name);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_COLLISION_SOUND_URL, QString, CollisionSoundURL);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_HREF, QString, Href);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_DESCRIPTION, QString, Description);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ACTION_DATA, QByteArray, DynamicData);
+    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_LAST_EDITED_BY, QUuid, LastEditedBy);
+
+    public:
+    bool hasGravity() const { return getGravity() != ENTITY_ITEM_ZERO_VEC3; }
+    protected:
 
 
     QHash<ChangeHandlerId, ChangeHandlerCallback> _changeHandlers;

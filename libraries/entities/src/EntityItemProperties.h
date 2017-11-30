@@ -34,6 +34,7 @@
 #include "EntityItemPropertiesMacros.h"
 #include "EntityTypes.h"
 #include "EntityPropertyFlags.h"
+
 #include "LightEntityItem.h"
 #include "LineEntityItem.h"
 #include "ParticleEffectEntityItem.h"
