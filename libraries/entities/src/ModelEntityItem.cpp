@@ -198,10 +198,10 @@ void ModelEntityItem::debugDump() const {
 void ModelEntityItem::setShapeType(ShapeType type) {
     withWriteLock([&] {
         if (type != _shapeType) {
-            if (type == SHAPE_TYPE_STATIC_MESH && _dynamic) {
+            if (type == SHAPE_TYPE_STATIC_MESH && _Dynamic) {
                 // dynamic and STATIC_MESH are incompatible
                 // since the shape is being set here we clear the dynamic bit
-                _dynamic = false;
+                _Dynamic = false;
                 _dirtyFlags |= Simulation::DIRTY_MOTION_TYPE;
             }
             _shapeType = type;
@@ -216,7 +216,7 @@ ShapeType ModelEntityItem::getShapeType() const {
 
 ShapeType ModelEntityItem::computeTrueShapeType() const {
     ShapeType type = _shapeType;
-    if (type == SHAPE_TYPE_STATIC_MESH && _dynamic) {
+    if (type == SHAPE_TYPE_STATIC_MESH && _Dynamic) {
         // dynamic is incompatible with STATIC_MESH
         // shouldn't fall in here but just in case --> fall back to COMPOUND
         type = SHAPE_TYPE_COMPOUND;

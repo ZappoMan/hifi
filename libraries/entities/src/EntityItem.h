@@ -174,48 +174,18 @@ public:
 
     void requiresRecalcBoxes();
 
-    // Hyperlink related getters and setters
-    QString getHref() const;
-    void setHref(QString value);
-
-    QString getDescription() const;
-    void setDescription(const QString& value);
-
-    /// Dimensions in meters (0.0 - TREE_SCALE)
-    inline const glm::vec3 getDimensions() const { return _dimensions; }
-    virtual void setDimensions(const glm::vec3& value);
-
     float getLocalRenderAlpha() const;
     void setLocalRenderAlpha(float localRenderAlpha);
 
-    void setDensity(float density);
-    float getDensity() const;
     float computeMass() const;
     void setMass(float mass);
-
 
     bool hasVelocity() const { return getWorldVelocity() != ENTITY_ITEM_ZERO_VEC3; }
     bool hasLocalVelocity() const { return getLocalVelocity() != ENTITY_ITEM_ZERO_VEC3; }
 
-    glm::vec3 getGravity() const; /// get gravity in meters
-    void setGravity(const glm::vec3& value); /// gravity in meters
-
     glm::vec3 getAcceleration() const; /// get acceleration in meters/second/second
     void setAcceleration(const glm::vec3& value); /// acceleration in meters/second/second
     bool hasAcceleration() const { return getAcceleration() != ENTITY_ITEM_ZERO_VEC3; }
-
-    float getDamping() const;
-    void setDamping(float value);
-
-    //float getRestitution() const;
-    //void setRestitution(float value);
-
-    //float getFriction() const;
-    //void setFriction(float value);
-
-    // lifetime related properties.
-    //float getLifetime() const; /// get the lifetime in seconds for the entity
-    //void setLifetime(float value); /// set the lifetime in seconds for the entity
 
     quint64 getCreated() const; /// get the created-time in useconds for the entity
     void setCreated(quint64 value); /// set the created-time in useconds for the entity
@@ -240,60 +210,23 @@ public:
     virtual AACube getQueryAACube(bool& success) const override;
     virtual bool shouldPuffQueryAACube() const override;
 
-    QString getScript() const;
-    void setScript(const QString& value);
-
-    quint64 getScriptTimestamp() const;
-    void setScriptTimestamp(const quint64 value);
-
     QString getServerScripts() const;
-    void setServerScripts(const QString& serverScripts);
-
-    QString getCollisionSoundURL() const;
-    void setCollisionSoundURL(const QString& value);
-
-    glm::vec3 getRegistrationPoint() const; /// registration point as ratio of entity
-
-    /// registration point as ratio of entity
-    virtual void setRegistrationPoint(const glm::vec3& value); // FIXME: this is suspicious! 
+    void setServerScripts(QString serverScripts);
 
     bool hasAngularVelocity() const { return getWorldAngularVelocity() != ENTITY_ITEM_ZERO_VEC3; }
     bool hasLocalAngularVelocity() const { return getLocalAngularVelocity() != ENTITY_ITEM_ZERO_VEC3; }
-
     virtual void setAngularVelocity(const glm::vec3& angularVelocity);
 
-    float getAngularDamping() const;
-    void setAngularDamping(float value);
-
-    virtual QString getName() const override;
-    void setName(const QString& value);
     QString getDebugName();
 
-    bool getVisible() const;
-    void setVisible(bool value);
     inline bool isVisible() const { return getVisible(); }
     inline bool isInvisible() const { return !getVisible(); }
 
     bool isChildOfMyAvatar() const;
 
-    bool getCollisionless() const;
-    void setCollisionless(bool value);
-
-    uint8_t getCollisionMask() const;
-    void setCollisionMask(uint8_t value);
-
     void computeCollisionGroupAndFinalMask(int16_t& group, int16_t& mask) const;
 
-    bool getDynamic() const;
-    void setDynamic(bool value);
-
     virtual bool shouldBePhysical() const { return false; }
-
-    bool getLocked() const;
-    void setLocked(bool value);
-
-    QString getUserData() const;
-    virtual void setUserData(const QString& value); // FIXME: This is suspicious
 
     // FIXME not thread safe?
     const SimulationOwner& getSimulationOwner() const { return _simulationOwner; }
@@ -307,28 +240,6 @@ public:
     void setPendingOwnershipPriority(quint8 priority, const quint64& timestamp);
     uint8_t getPendingOwnershipPriority() const { return _simulationOwner.getPendingPriority(); }
     void rememberHasSimulationOwnershipBid() const;
-
-    // Certifiable Properties
-    QString getItemName() const;
-    void setItemName(const QString& value);
-    QString getItemDescription() const;
-    void setItemDescription(const QString& value);
-    QString getItemCategories() const;
-    void setItemCategories(const QString& value);
-    QString getItemArtist() const;
-    void setItemArtist(const QString& value);
-    QString getItemLicense() const;
-    void setItemLicense(const QString& value);
-    quint32 getLimitedRun() const;
-    void setLimitedRun(const quint32&);
-    QString getMarketplaceID() const;
-    void setMarketplaceID(const QString& value);
-    quint32 getEditionNumber() const;
-    void setEditionNumber(const quint32&);
-    quint32 getEntityInstanceNumber() const;
-    void setEntityInstanceNumber(const quint32&);
-    QString getCertificateID() const;
-    void setCertificateID(const QString& value);
 
     // TODO: get rid of users of getRadius()...
     float getRadius() const;
@@ -387,8 +298,7 @@ public:
     bool updateAction(EntitySimulationPointer simulation, const QUuid& actionID, const QVariantMap& arguments);
     bool removeAction(EntitySimulationPointer simulation, const QUuid& actionID);
     bool clearActions(EntitySimulationPointer simulation);
-    void setDynamicData(QByteArray dynamicData);
-    const QByteArray getDynamicData() const;
+
     bool hasActions() const { return !_objectActions.empty(); }
     QList<QUuid> getActionIDs() const { return _objectActions.keys(); }
     QVariantMap getActionArguments(const QUuid& actionID) const;
@@ -428,9 +338,9 @@ public:
     /// We only want to preload if:
     ///    there is some script, and either the script value or the scriptTimestamp
     ///    value have changed since our last preload
-    bool shouldPreloadScript() const { return !_script.isEmpty() &&
-                                              ((_loadedScript != _script) || (_loadedScriptTimestamp != _scriptTimestamp)); }
-    void scriptHasPreloaded() { _loadedScript = _script; _loadedScriptTimestamp = _scriptTimestamp; }
+    bool shouldPreloadScript() const { return !_Script.isEmpty() &&
+                                              ((_loadedScript != _Script) || (_loadedScriptTimestamp != _ScriptTimestamp)); }
+    void scriptHasPreloaded() { _loadedScript = _Script; _loadedScriptTimestamp = _ScriptTimestamp; }
     void scriptHasUnloaded() { _loadedScript = ""; _loadedScriptTimestamp = 0; }
 
     bool getClientOnly() const { return _clientOnly; }
@@ -445,9 +355,6 @@ public:
     virtual QObject* getEventHandler() { return nullptr; }
 
     virtual void emitScriptEvent(const QVariant& message) {}
-
-    QUuid getLastEditedBy() const { return _lastEditedBy; }
-    void setLastEditedBy(QUuid value) { _lastEditedBy = value; }
 
     bool matchesJSONFilters(const QJsonObject& jsonFilters) const;
 
@@ -511,8 +418,6 @@ protected:
 
 
     #define DEFINE_ENTITYITEM_PROPERTY_CORE(I, T, N) \
-        protected: \
-            T _##N; \
         private: \
             EntityProperty<T> _##I { \
                 _##T##Properties, \
@@ -522,7 +427,24 @@ protected:
                 &EntityItem::set##N \
             }; 
 
-    #define DEFINE_ENTITYITEM_PROPERTY(I, T, N) \
+    #define DEFINE_ENTITYITEM_PROPERTY_CORE_DATA(I, T, N, D) \
+        protected: \
+            T _##N { D }; \
+        DEFINE_ENTITYITEM_PROPERTY_CORE(I, T, N)
+
+    #define DEFINE_ENTITYITEM_PROPERTY_CUSTOM(I, T, N, D) \
+        public: \
+            T get##N() const; \
+            virtual void set##N(T value); \
+        DEFINE_ENTITYITEM_PROPERTY_CORE_DATA(I, T, N, D) 
+
+    #define DEFINE_ENTITYITEM_PROPERTY_FULL_CUSTOM(I, T, N) \
+        public: \
+            T get##N() const; \
+            virtual void set##N(T value); \
+        DEFINE_ENTITYITEM_PROPERTY_CORE(I, T, N) 
+
+    #define DEFINE_ENTITYITEM_PROPERTY_GETTER(I, T, N) \
         public: \
             T get##N() const { \
                 T result; \
@@ -530,13 +452,38 @@ protected:
                     result = _##N; \
                 }); \
                 return result; \
-            } \
+            }
+
+    #define DEFINE_ENTITYITEM_PROPERTY_SETTER(I, T, N) \
+        public: \
             void set##N(T value) { \
                 withWriteLock([&] { \
                     _##N = value; \
                 }); \
-            } \
-    DEFINE_ENTITYITEM_PROPERTY_CORE(I, T, N)
+            }
+
+    #define DEFINE_ENTITYITEM_PROPERTY_CLAMPED_DIRTYFLAG(I, T, N, D, MIN, MAX, FLAG) \
+            public: \
+                void set##N(T value) { \
+                    auto clampedValue = glm::clamp(value, MIN, MAX);\
+                    withWriteLock([&] { \
+                        _##N = clampedValue; \
+                        _dirtyFlags |= FLAG; \
+                    }); \
+                } \
+        DEFINE_ENTITYITEM_PROPERTY_GETTER(I, T, N) \
+        DEFINE_ENTITYITEM_PROPERTY_CORE_DATA(I, T, N, D)
+
+    #define DEFINE_ENTITYITEM_PROPERTY_BASIC(I, T, N, D) \
+        DEFINE_ENTITYITEM_PROPERTY_SETTER(I, T, N) \
+        DEFINE_ENTITYITEM_PROPERTY_GETTER(I, T, N) \
+        DEFINE_ENTITYITEM_PROPERTY_CORE_DATA(I, T, N, D)
+
+    #define DEFINE_ENTITYITEM_PROPERTY_CUSTOM_SETTER(I, T, N, D) \
+        public: \
+            virtual void set##N(T value); \
+        DEFINE_ENTITYITEM_PROPERTY_GETTER(I, T, N) \
+        DEFINE_ENTITYITEM_PROPERTY_CORE_DATA(I, T, N, D)
 
 
     // TODO:
@@ -559,50 +506,74 @@ protected:
     //
     //   - implement OPTIONAL common getter/setter templates, since most are identical pattern
 
+    /**
+        Custom network readers...
+            READ_ENTITY_PROPERTY(PROP_POSITION, glm::vec3, customUpdatePositionFromNetwork);
+            READ_ENTITY_PROPERTY(PROP_ROTATION, glm::quat, customUpdateRotationFromNetwork);
+            READ_ENTITY_PROPERTY(PROP_VELOCITY, glm::vec3, customUpdateVelocityFromNetwork);
+            READ_ENTITY_PROPERTY(PROP_ANGULAR_VELOCITY, glm::vec3, customUpdateAngularVelocityFromNetwork);
 
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_DIMENSIONS, vec3, Dimensions);
+        Custom network readers, normal network appenders...
 
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_GRAVITY, vec3, Gravity);
+            READ_ENTITY_PROPERTY(PROP_ACCELERATION, glm::vec3, customSetAcceleration);
 
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_DENSITY, float, Density);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_DAMPING, float, Damping);
 
-    DEFINE_ENTITYITEM_PROPERTY(PROP_RESTITUTION, float, Restitution);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_FRICTION, float, Friction);
-    DEFINE_ENTITYITEM_PROPERTY(PROP_LIFETIME, float, Lifetime);
+    **/
 
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_SCRIPT, QString, Script);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_SCRIPT_TIMESTAMP, quint64, ScriptTimestamp);
+    // NOTE: Damping is applied like this:  v *= pow(1 - damping, dt)
+    //       Hence the damping coefficient must range from 0 (no damping) to 1 (immediate stop).
+    //       Each damping value relates to a corresponding exponential decay timescale as follows:
+    //           timescale = -1 / ln(1 - damping)
+    //           damping = 1 - exp(-1 / timescale)
+    DEFINE_ENTITYITEM_PROPERTY_CLAMPED_DIRTYFLAG(PROP_DAMPING, float, Damping, ENTITY_ITEM_DEFAULT_DAMPING, 0.0f, 1.0f, Simulation::DIRTY_MATERIAL);
+    DEFINE_ENTITYITEM_PROPERTY_CLAMPED_DIRTYFLAG(PROP_ANGULAR_DAMPING, float, AngularDamping, ENTITY_ITEM_DEFAULT_ANGULAR_DAMPING, 0.0f, 1.0f, Simulation::DIRTY_MATERIAL);
 
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_REGISTRATION_POINT, vec3, RegistrationPoint);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ANGULAR_DAMPING, float, AngularDamping);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_VISIBLE, bool, Visible);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_COLLISIONLESS, bool, Collisionless);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_COLLISION_MASK, uint8_t, CollisionMask);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_DYNAMIC, bool, Dynamic);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_LOCKED, bool, Locked);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_USER_DATA, QString, UserData);
+    DEFINE_ENTITYITEM_PROPERTY_CLAMPED_DIRTYFLAG(PROP_DENSITY, float, Density, ENTITY_ITEM_DEFAULT_DENSITY, ENTITY_ITEM_MIN_DENSITY, ENTITY_ITEM_MAX_DENSITY, Simulation::DIRTY_MASS);
+    DEFINE_ENTITYITEM_PROPERTY_CLAMPED_DIRTYFLAG(PROP_RESTITUTION, float, Restitution, ENTITY_ITEM_DEFAULT_RESTITUTION, ENTITY_ITEM_MIN_RESTITUTION, ENTITY_ITEM_MAX_RESTITUTION, Simulation::DIRTY_MATERIAL);
+    DEFINE_ENTITYITEM_PROPERTY_CLAMPED_DIRTYFLAG(PROP_FRICTION, float, Friction, ENTITY_ITEM_DEFAULT_FRICTION, ENTITY_ITEM_MIN_FRICTION, ENTITY_ITEM_MAX_FRICTION, Simulation::DIRTY_MATERIAL);
+    DEFINE_ENTITYITEM_PROPERTY_CLAMPED_DIRTYFLAG(PROP_LIFETIME, float, Lifetime, ENTITY_ITEM_DEFAULT_LIFETIME, ENTITY_ITEM_IMMORTAL_LIFETIME, ENTITY_ITEM_MAX_LIFETIME, Simulation::DIRTY_LIFETIME);
 
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_MARKETPLACE_ID, QString, MarketplaceID);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ITEM_NAME, QString, ItemName);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ITEM_DESCRIPTION, QString, ItemDescription);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ITEM_CATEGORIES, QString, ItemCategories);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ITEM_ARTIST, QString, ItemArtist);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ITEM_LICENSE, QString, ItemLicense);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_LIMITED_RUN, quint32, LimitedRun);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_EDITION_NUMBER, quint32, EditionNumber);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ENTITY_INSTANCE_NUMBER, quint32, EntityInstanceNumber);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_CERTIFICATE_ID, QString, CertificateID);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_SCRIPT, QString, Script, ENTITY_ITEM_DEFAULT_SCRIPT);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_SCRIPT_TIMESTAMP, quint64, ScriptTimestamp, ENTITY_ITEM_DEFAULT_SCRIPT_TIMESTAMP);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_VISIBLE, bool, Visible, ENTITY_ITEM_DEFAULT_VISIBLE);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_USER_DATA, QString, UserData, ENTITY_ITEM_DEFAULT_USER_DATA);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_MARKETPLACE_ID, QString, MarketplaceID, ENTITY_ITEM_DEFAULT_MARKETPLACE_ID);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_ITEM_NAME, QString, ItemName, ENTITY_ITEM_DEFAULT_ITEM_NAME);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_ITEM_DESCRIPTION, QString, ItemDescription, ENTITY_ITEM_DEFAULT_ITEM_DESCRIPTION);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_ITEM_CATEGORIES, QString, ItemCategories, ENTITY_ITEM_DEFAULT_ITEM_CATEGORIES);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_ITEM_ARTIST, QString, ItemArtist, ENTITY_ITEM_DEFAULT_ITEM_ARTIST);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_ITEM_LICENSE, QString, ItemLicense, ENTITY_ITEM_DEFAULT_ITEM_LICENSE);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_LIMITED_RUN, quint32, LimitedRun, ENTITY_ITEM_DEFAULT_LIMITED_RUN);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_EDITION_NUMBER, quint32, EditionNumber, ENTITY_ITEM_DEFAULT_EDITION_NUMBER);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_ENTITY_INSTANCE_NUMBER, quint32, EntityInstanceNumber, ENTITY_ITEM_DEFAULT_ENTITY_INSTANCE_NUMBER);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_CERTIFICATE_ID, QString, CertificateID, ENTITY_ITEM_DEFAULT_CERTIFICATE_ID);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_NAME, QString, Name, ENTITY_ITEM_DEFAULT_NAME);
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_HREF, QString, Href, "");  //     if (! (value.toLower().startsWith("hifi://")) ) {  --- FIXME!!!!!
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_DESCRIPTION, QString, Description, "");
+    DEFINE_ENTITYITEM_PROPERTY_BASIC(PROP_LAST_EDITED_BY, QUuid, LastEditedBy, ENTITY_ITEM_DEFAULT_LAST_EDITED_BY);
 
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_NAME, QString, Name);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_COLLISION_SOUND_URL, QString, CollisionSoundURL);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_HREF, QString, Href);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_DESCRIPTION, QString, Description);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_ACTION_DATA, QByteArray, DynamicData);
-    DEFINE_ENTITYITEM_PROPERTY_CORE(PROP_LAST_EDITED_BY, QUuid, LastEditedBy);
+    // common getter
+        // getAcceleration
+        // getServerScripts
+    DEFINE_ENTITYITEM_PROPERTY_CUSTOM_SETTER(PROP_GRAVITY, vec3, Gravity, ENTITY_ITEM_DEFAULT_GRAVITY);
+    DEFINE_ENTITYITEM_PROPERTY_CUSTOM_SETTER(PROP_COLLISIONLESS, bool, Collisionless, ENTITY_ITEM_DEFAULT_COLLISIONLESS);
+    DEFINE_ENTITYITEM_PROPERTY_CUSTOM_SETTER(PROP_COLLISION_MASK, uint8_t, CollisionMask, ENTITY_COLLISION_MASK_DEFAULT);
+    DEFINE_ENTITYITEM_PROPERTY_CUSTOM_SETTER(PROP_LOCKED, bool, Locked, ENTITY_ITEM_DEFAULT_LOCKED);
+    DEFINE_ENTITYITEM_PROPERTY_CUSTOM_SETTER(PROP_DIMENSIONS, vec3, Dimensions, ENTITY_ITEM_DEFAULT_DIMENSIONS);
+    DEFINE_ENTITYITEM_PROPERTY_CUSTOM_SETTER(PROP_REGISTRATION_POINT, vec3, RegistrationPoint, ENTITY_ITEM_DEFAULT_REGISTRATION_POINT);
+    DEFINE_ENTITYITEM_PROPERTY_CUSTOM_SETTER(PROP_COLLISION_SOUND_URL, QString, CollisionSoundURL, ENTITY_ITEM_DEFAULT_COLLISION_SOUND_URL);
+
+    // custom getter and setter
+    DEFINE_ENTITYITEM_PROPERTY_CUSTOM(PROP_DYNAMIC, bool, Dynamic, ENTITY_ITEM_DEFAULT_DYNAMIC);
+
+    // custom getter, setter, storage
+    DEFINE_ENTITYITEM_PROPERTY_FULL_CUSTOM(PROP_ACTION_DATA, QByteArray, DynamicData);
+
 
     public:
+
     bool hasGravity() const { return getGravity() != ENTITY_ITEM_ZERO_VEC3; }
+
     protected:
 
 
@@ -617,13 +588,11 @@ protected:
 
     virtual void dimensionsChanged() override;
 
-    glm::vec3 _dimensions { ENTITY_ITEM_DEFAULT_DIMENSIONS };
     EntityTypes::EntityType _type { EntityTypes::Unknown };
     quint64 _lastSimulated { 0 }; // last time this entity called simulate(), this includes velocity, angular velocity,
                             // and physics changes
     quint64 _lastUpdated { 0 }; // last time this entity called update(), this includes animations and non-physics changes
     quint64 _lastEdited { 0 }; // last official local or remote edit time
-    QUuid _lastEditedBy { ENTITY_ITEM_DEFAULT_LAST_EDITED_BY }; // id of last editor
     quint64 _lastBroadcast; // the last time we sent an edit packet about this entity
 
     quint64 _lastEditedFromRemote { 0 }; // last time we received and edit from the server
@@ -639,21 +608,14 @@ protected:
     mutable bool _recalcMaxAACube { true };
 
     float _localRenderAlpha { ENTITY_ITEM_DEFAULT_LOCAL_RENDER_ALPHA };
-    float _density { ENTITY_ITEM_DEFAULT_DENSITY }; // kg/m^3
+    
     // NOTE: _volumeMultiplier is used to allow some mass properties code exist in the EntityItem base class
     // rather than in all of the derived classes.  If we ever collapse these classes to one we could do it a
     // different way.
     float _volumeMultiplier { 1.0f };
-    glm::vec3 _gravity { ENTITY_ITEM_DEFAULT_GRAVITY };
     glm::vec3 _acceleration { ENTITY_ITEM_DEFAULT_ACCELERATION };
-    float _damping { ENTITY_ITEM_DEFAULT_DAMPING };
-    float _restitution { ENTITY_ITEM_DEFAULT_RESTITUTION };
-    float _friction { ENTITY_ITEM_DEFAULT_FRICTION };
-    float _lifetime { ENTITY_ITEM_DEFAULT_LIFETIME };
 
-    QString _script { ENTITY_ITEM_DEFAULT_SCRIPT }; /// the value of the script property
     QString _loadedScript; /// the value of _script when the last preload signal was sent
-    quint64 _scriptTimestamp { ENTITY_ITEM_DEFAULT_SCRIPT_TIMESTAMP }; /// the script loaded property used for forced reload
 
     QString _serverScripts;
     /// keep track of time when _serverScripts property was last changed
@@ -663,43 +625,8 @@ protected:
     // NOTE: on construction we want this to be different from _scriptTimestamp so we intentionally bump it
     quint64 _loadedScriptTimestamp { ENTITY_ITEM_DEFAULT_SCRIPT_TIMESTAMP + 1 };
 
-    QString _collisionSoundURL { ENTITY_ITEM_DEFAULT_COLLISION_SOUND_URL };
-    glm::vec3 _registrationPoint { ENTITY_ITEM_DEFAULT_REGISTRATION_POINT };
-    float _angularDamping { ENTITY_ITEM_DEFAULT_ANGULAR_DAMPING };
-    bool _visible { ENTITY_ITEM_DEFAULT_VISIBLE };
-    bool _collisionless { ENTITY_ITEM_DEFAULT_COLLISIONLESS };
-    uint8_t _collisionMask { ENTITY_COLLISION_MASK_DEFAULT };
-    bool _dynamic { ENTITY_ITEM_DEFAULT_DYNAMIC };
-    bool _locked { ENTITY_ITEM_DEFAULT_LOCKED };
-    QString _userData { ENTITY_ITEM_DEFAULT_USER_DATA };
     SimulationOwner _simulationOwner;
     bool _shouldHighlight { false };
-    QString _name { ENTITY_ITEM_DEFAULT_NAME };
-    QString _href; //Hyperlink href
-    QString _description; //Hyperlink description
-
-    // Certifiable Properties
-    QString _itemName { ENTITY_ITEM_DEFAULT_ITEM_NAME };
-    QString _itemDescription { ENTITY_ITEM_DEFAULT_ITEM_DESCRIPTION };
-    QString _itemCategories { ENTITY_ITEM_DEFAULT_ITEM_CATEGORIES };
-    QString _itemArtist { ENTITY_ITEM_DEFAULT_ITEM_ARTIST };
-    QString _itemLicense { ENTITY_ITEM_DEFAULT_ITEM_LICENSE };
-    quint32 _limitedRun { ENTITY_ITEM_DEFAULT_LIMITED_RUN };
-    QString _certificateID { ENTITY_ITEM_DEFAULT_CERTIFICATE_ID };
-    quint32 _editionNumber { ENTITY_ITEM_DEFAULT_EDITION_NUMBER };
-    quint32 _entityInstanceNumber { ENTITY_ITEM_DEFAULT_ENTITY_INSTANCE_NUMBER };
-    QString _marketplaceID { ENTITY_ITEM_DEFAULT_MARKETPLACE_ID };
-
-
-    // NOTE: Damping is applied like this:  v *= pow(1 - damping, dt)
-    //
-    // Hence the damping coefficient must range from 0 (no damping) to 1 (immediate stop).
-    // Each damping value relates to a corresponding exponential decay timescale as follows:
-    //
-    // timescale = -1 / ln(1 - damping)
-    //
-    // damping = 1 - exp(-1 / timescale)
-    //
 
     // DirtyFlags are set whenever a property changes that the EntitySimulation needs to know about.
     uint32_t _dirtyFlags { 0 };   // things that have changed from EXTERNAL changes (via script or packet) but NOT from simulation

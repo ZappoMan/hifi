@@ -41,7 +41,7 @@ LightEntityItem::LightEntityItem(const EntityItemID& entityItemID) : EntityItem(
     _color[RED_INDEX] = _color[GREEN_INDEX] = _color[BLUE_INDEX] = 0;
 }
 
-void LightEntityItem::setDimensions(const glm::vec3& value) {
+void LightEntityItem::setDimensions(glm::vec3 value) {
     if (_isSpotlight) {
         // If we are a spotlight, treat the z value as our radius or length, and
         // recalculate the x/y dimensions to properly encapsulate the spotlight.

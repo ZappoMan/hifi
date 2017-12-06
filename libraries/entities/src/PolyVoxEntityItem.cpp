@@ -448,7 +448,7 @@ glm::vec3 PolyVoxEntityItem::localCoordsToVoxelCoords(const glm::vec3& localCoor
 }
 
 ShapeType PolyVoxEntityItem::getShapeType() const {
-    if (_collisionless) {
+    if (getCollisionless()) {
         return SHAPE_TYPE_NONE;
     }
     return SHAPE_TYPE_COMPOUND;

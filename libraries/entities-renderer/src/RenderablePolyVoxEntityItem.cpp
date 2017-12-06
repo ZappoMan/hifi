@@ -258,7 +258,7 @@ glm::mat4 RenderablePolyVoxEntityItem::worldToVoxelMatrix() const {
 }
 
 bool RenderablePolyVoxEntityItem::setVoxel(const ivec3& v, uint8_t toValue) {
-    if (_locked) {
+    if (getLocked()) {
         return false;
     }
 
@@ -306,7 +306,7 @@ QByteArray RenderablePolyVoxEntityItem::volDataToArray(quint16 voxelXSize, quint
 
 bool RenderablePolyVoxEntityItem::setAll(uint8_t toValue) {
     bool result = false;
-    if (_locked) {
+    if (getLocked()) {
         return result;
     }
 
@@ -324,7 +324,7 @@ bool RenderablePolyVoxEntityItem::setAll(uint8_t toValue) {
 
 bool RenderablePolyVoxEntityItem::setCuboid(const glm::vec3& lowPosition, const glm::vec3& cuboidSize, int toValue) {
     bool result = false;
-    if (_locked) {
+    if (getLocked()) {
         return result;
     }
 
@@ -349,7 +349,7 @@ bool RenderablePolyVoxEntityItem::setCuboid(const glm::vec3& lowPosition, const 
 
 
 bool RenderablePolyVoxEntityItem::setVoxelInVolume(const vec3& position, uint8_t toValue) {
-    if (_locked) {
+    if (getLocked()) {
         return false;
     }
 
@@ -359,7 +359,7 @@ bool RenderablePolyVoxEntityItem::setVoxelInVolume(const vec3& position, uint8_t
 
 bool RenderablePolyVoxEntityItem::setSphereInVolume(const vec3& center, float radius, uint8_t toValue) {
     bool result = false;
-    if (_locked) {
+    if (getLocked()) {
         return result;
     }
 
@@ -386,7 +386,7 @@ bool RenderablePolyVoxEntityItem::setSphereInVolume(const vec3& center, float ra
 
 bool RenderablePolyVoxEntityItem::setSphere(const vec3& centerWorldCoords, float radiusWorldCoords, uint8_t toValue) {
     bool result = false;
-    if (_locked) {
+    if (getLocked()) {
         return result;
     }
 
@@ -447,7 +447,7 @@ bool RenderablePolyVoxEntityItem::setSphere(const vec3& centerWorldCoords, float
 bool RenderablePolyVoxEntityItem::setCapsule(const vec3& startWorldCoords, const vec3& endWorldCoords,
                                              float radiusWorldCoords, uint8_t toValue) {
     bool result = false;
-    if (_locked) {
+    if (getLocked()) {
         return result;
     }
 
@@ -635,14 +635,14 @@ PolyVox::RaycastResult RenderablePolyVoxEntityItem::doRayCast(glm::vec4 originIn
 
 // virtual
 ShapeType RenderablePolyVoxEntityItem::getShapeType() const {
-    if (_collisionless) {
+    if (getCollisionless()) {
         return SHAPE_TYPE_NONE;
     }
     return SHAPE_TYPE_COMPOUND;
 }
 
-void RenderablePolyVoxEntityItem::setRegistrationPoint(const glm::vec3& value) {
-    if (value != _registrationPoint) {
+void RenderablePolyVoxEntityItem::setRegistrationPoint(glm::vec3 value) {
+    if (value != getRegistrationPoint()) {
         _meshDirty = true;
         EntityItem::setRegistrationPoint(value);
     }
@@ -1137,7 +1137,7 @@ void RenderablePolyVoxEntityItem::setMesh(model::MeshPointer mesh) {
     // this catches the payload from recomputeMesh
     bool neighborsNeedUpdate;
     withWriteLock([&] {
-        if (!_collisionless) {
+        if (!_Collisionless) {
             _dirtyFlags |= Simulation::DIRTY_SHAPE | Simulation::DIRTY_MASS;
         }
         _mesh = mesh;
@@ -1301,9 +1301,9 @@ void RenderablePolyVoxEntityItem::setCollisionPoints(ShapeInfo::PointCollection 
     // included in the points and the shapeManager wont know that the shape has changed.
     withWriteLock([&] {
         QString shapeKey = QString(_voxelData.toBase64()) + "," +
-            QString::number(_registrationPoint.x) + "," +
-            QString::number(_registrationPoint.y) + "," +
-            QString::number(_registrationPoint.z);
+            QString::number(_RegistrationPoint.x) + "," +
+            QString::number(_RegistrationPoint.y) + "," +
+            QString::number(_RegistrationPoint.z);
         _shapeInfo.setParams(SHAPE_TYPE_COMPOUND, collisionModelDimensions, shapeKey);
         _shapeInfo.setPointCollection(pointCollection);
         _meshDirty = false;

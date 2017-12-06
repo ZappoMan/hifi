@@ -81,6 +81,9 @@ const float ENTITY_ITEM_MIN_FRICTION = 0.0f;
 const float ENTITY_ITEM_MAX_FRICTION = 10.0f;
 const float ENTITY_ITEM_DEFAULT_FRICTION = 0.5f;
 
+const float ENTITY_ITEM_MIN_LIFETIME = 0.0f;
+const float ENTITY_ITEM_MAX_LIFETIME = std::numeric_limits<float>::max();
+
 const bool ENTITY_ITEM_DEFAULT_COLLISIONLESS = false;
 const bool ENTITY_ITEM_DEFAULT_DYNAMIC = false;
 const bool ENTITY_ITEM_DEFAULT_BILLBOARDED = false;

@@ -204,7 +204,7 @@ void ShapeEntityItem::setColor(const QColor& value) {
     setAlpha(value.alpha());
 }
 
-void ShapeEntityItem::setDimensions(const glm::vec3& value) {
+void ShapeEntityItem::setDimensions(glm::vec3 value) {
     const float MAX_FLAT_DIMENSION = 0.0001f;
 	if ((_shape == entity::Shape::Circle || _shape == entity::Shape::Quad) && value.y > MAX_FLAT_DIMENSION) {
         // enforce flatness in Y
@@ -251,7 +251,7 @@ bool ShapeEntityItem::findDetailedRayIntersection(const glm::vec3& origin, const
 void ShapeEntityItem::debugDump() const {
     quint64 now = usecTimestampNow();
     qCDebug(entities) << "SHAPE EntityItem id:" << getEntityItemID() << "---------------------------------------------";
-    qCDebug(entities) << "               name:" << _name;
+    qCDebug(entities) << "               name:" << getName();
     qCDebug(entities) << "              shape:" << stringFromShape(_shape) << " (EnumId: " << _shape << " )";
     qCDebug(entities) << " collisionShapeType:" << ShapeInfo::getNameForShapeType(getShapeType());
     qCDebug(entities) << "              color:" << _color[0] << "," << _color[1] << "," << _color[2];

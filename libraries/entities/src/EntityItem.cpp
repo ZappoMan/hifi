@@ -851,16 +851,6 @@ float EntityItem::computeMass() const {
     return getDensity() * _volumeMultiplier * dimensions.x * dimensions.y * dimensions.z;
 }
 
-void EntityItem::setDensity(float density) {
-    float clampedDensity = glm::max(glm::min(density, ENTITY_ITEM_MAX_DENSITY), ENTITY_ITEM_MIN_DENSITY);
-    withWriteLock([&] {
-        if (_density != clampedDensity) {
-            _density = clampedDensity;
-            _dirtyFlags |= Simulation::DIRTY_MASS;
-        }
-    });
-}
-
 void EntityItem::setMass(float mass) {
     // Setting the mass actually changes the _density (at fixed volume), however
     // we must protect the density range to help maintain stability of physics simulation
@@ -878,14 +868,10 @@ void EntityItem::setMass(float mass) {
     } else {
         newDensity = glm::max(glm::min(mass / volume, ENTITY_ITEM_MAX_DENSITY), ENTITY_ITEM_MIN_DENSITY);
     }
-    withWriteLock([&] {
-        if (_density != newDensity) {
-            _density = newDensity;
-            _dirtyFlags |= Simulation::DIRTY_MASS;
-        }
-    });
+    setDensity(newDensity);
 }
 
+/**
 void EntityItem::setHref(QString value) {
     auto href = value.toLower();
     if (! (value.toLower().startsWith("hifi://")) ) {
@@ -895,12 +881,13 @@ void EntityItem::setHref(QString value) {
         _href = value;
     });
 }
+**/
 
-void EntityItem::setCollisionSoundURL(const QString& value) {
+void EntityItem::setCollisionSoundURL(QString value) {
     bool modified = false;
     withWriteLock([&] {
-        if (_collisionSoundURL != value) {
-            _collisionSoundURL = value;
+        if (_CollisionSoundURL != value) {
+            _CollisionSoundURL = value;
             modified = true;
         }
     });
@@ -1365,7 +1352,7 @@ AACube EntityItem::getMaximumAACube(bool& success) const {
             // we want to compute the furthestExtent that an entity can extend out from its "position"
             // to do this we compute the max of these two vec3s: registration and 1-registration
             // and then scale by dimensions
-            glm::vec3 maxExtents = getDimensions() * glm::max(_registrationPoint, glm::vec3(1.0f) - _registrationPoint);
+            glm::vec3 maxExtents = getDimensions() * glm::max(_RegistrationPoint, glm::vec3(1.0f) - _RegistrationPoint);
 
             // there exists a sphere that contains maxExtents for all rotations
             float radius = glm::length(maxExtents);
@@ -1391,8 +1378,8 @@ AACube EntityItem::getMinimumAACube(bool& success) const {
         if (success) {
             _recalcMinAACube = false;
             glm::vec3 dimensions = getDimensions();
-            glm::vec3 unrotatedMinRelativeToEntity = - (dimensions * _registrationPoint);
-            glm::vec3 unrotatedMaxRelativeToEntity = dimensions * (glm::vec3(1.0f, 1.0f, 1.0f) - _registrationPoint);
+            glm::vec3 unrotatedMinRelativeToEntity = - (dimensions * _RegistrationPoint);
+            glm::vec3 unrotatedMaxRelativeToEntity = dimensions * (glm::vec3(1.0f, 1.0f, 1.0f) - _RegistrationPoint);
             Extents extents = { unrotatedMinRelativeToEntity, unrotatedMaxRelativeToEntity };
             extents.rotate(getWorldOrientation());
 
@@ -1421,8 +1408,8 @@ AABox EntityItem::getAABox(bool& success) const {
         if (success) {
             _recalcAABox = false;
             glm::vec3 dimensions = getDimensions();
-            glm::vec3 unrotatedMinRelativeToEntity = - (dimensions * _registrationPoint);
-            glm::vec3 unrotatedMaxRelativeToEntity = dimensions * (glm::vec3(1.0f, 1.0f, 1.0f) - _registrationPoint);
+            glm::vec3 unrotatedMinRelativeToEntity = - (dimensions * _RegistrationPoint);
+            glm::vec3 unrotatedMaxRelativeToEntity = dimensions * (glm::vec3(1.0f, 1.0f, 1.0f) - _RegistrationPoint);
             Extents extents = { unrotatedMinRelativeToEntity, unrotatedMaxRelativeToEntity };
             extents.rotate(getWorldOrientation());
 
@@ -1464,7 +1451,7 @@ float EntityItem::getRadius() const {
 }
 
 void EntityItem::adjustShapeInfoByRegistration(ShapeInfo& info) const {
-    if (_registrationPoint != ENTITY_ITEM_DEFAULT_REGISTRATION_POINT) {
+    if (_RegistrationPoint != ENTITY_ITEM_DEFAULT_REGISTRATION_POINT) {
         glm::mat4 scale = glm::scale(getDimensions());
         glm::mat4 registration = scale * glm::translate(ENTITY_ITEM_DEFAULT_REGISTRATION_POINT - getRegistrationPoint());
         glm::vec3 regTransVec = glm::vec3(registration[3]); // extract position component from matrix
@@ -1495,10 +1482,10 @@ float EntityItem::getVolumeEstimate() const {
     return dimensions.x * dimensions.y * dimensions.z;
 }
 
-void EntityItem::setRegistrationPoint(const glm::vec3& value) {
-    if (value != _registrationPoint) {
+void EntityItem::setRegistrationPoint(glm::vec3 value) {
+    if (value != _RegistrationPoint) {
         withWriteLock([&] {
-            _registrationPoint = glm::clamp(value, 0.0f, 1.0f);
+            _RegistrationPoint = glm::clamp(value, 0.0f, 1.0f);
         });
         dimensionsChanged(); // Registration Point affects the bounding box
         markDirtyFlags(Simulation::DIRTY_SHAPE);
@@ -1545,11 +1532,11 @@ void EntityItem::setParentID(const QUuid& value) {
     }
 }
 
-void EntityItem::setDimensions(const glm::vec3& value) {
+void EntityItem::setDimensions(glm::vec3 value) {
     glm::vec3 newDimensions = glm::max(value, glm::vec3(0.0f)); // can never have negative dimensions
     if (getDimensions() != newDimensions) {
         withWriteLock([&] {
-            _dimensions = newDimensions;
+            _Dimensions = newDimensions;
         });
         locationChanged();
         dimensionsChanged();
@@ -1599,29 +1586,19 @@ void EntityItem::setVelocity(const glm::vec3& value) {
     }
 }
 
-void EntityItem::setDamping(float value) {
-    auto clampedDamping = glm::clamp(value, 0.0f, 1.0f);
+void EntityItem::setGravity(glm::vec3 value) {
     withWriteLock([&] {
-        if (_damping != clampedDamping) {
-            _damping = clampedDamping;
-            _dirtyFlags |= Simulation::DIRTY_MATERIAL;
-        }
-    });
-}
-
-void EntityItem::setGravity(const glm::vec3& value) {
-    withWriteLock([&] {
-        if (_gravity != value) {
+        if (_Gravity != value) {
             if (getShapeType() == SHAPE_TYPE_STATIC_MESH) {
-                _gravity = Vectors::ZERO;
+                _Gravity = Vectors::ZERO;
             } else {
                 float magnitude = glm::length(value);
                 if (!glm::isnan(magnitude)) {
                     const float MAX_ACCELERATION_OF_GRAVITY = 10.0f * 9.8f; // 10g
                     if (magnitude > MAX_ACCELERATION_OF_GRAVITY) {
-                        _gravity = (MAX_ACCELERATION_OF_GRAVITY / magnitude) * value;
+                        _Gravity = (MAX_ACCELERATION_OF_GRAVITY / magnitude) * value;
                     } else {
-                        _gravity = value;
+                        _Gravity = value;
                     }
                     _dirtyFlags |= Simulation::DIRTY_LINEAR_VELOCITY;
                 }
@@ -1654,20 +1631,10 @@ void EntityItem::setAngularVelocity(const glm::vec3& value) {
     }
 }
 
-void EntityItem::setAngularDamping(float value) {
-    auto clampedDamping = glm::clamp(value, 0.0f, 1.0f);
-    withWriteLock([&] {
-        if (_angularDamping != clampedDamping) {
-            _angularDamping = clampedDamping;
-            _dirtyFlags |= Simulation::DIRTY_MATERIAL;
-        }
-    });
-}
-
 void EntityItem::setCollisionless(bool value) {
     withWriteLock([&] {
-        if (_collisionless != value) {
-            _collisionless = value;
+        if (_Collisionless != value) {
+            _Collisionless = value;
             _dirtyFlags |= Simulation::DIRTY_COLLISION_GROUP;
         }
     });
@@ -1675,8 +1642,8 @@ void EntityItem::setCollisionless(bool value) {
 
 void EntityItem::setCollisionMask(uint8_t value) {
     withWriteLock([&] {
-        if ((_collisionMask & ENTITY_COLLISION_MASK_DEFAULT) != (value & ENTITY_COLLISION_MASK_DEFAULT)) {
-            _collisionMask = (value & ENTITY_COLLISION_MASK_DEFAULT);
+        if ((_CollisionMask & ENTITY_COLLISION_MASK_DEFAULT) != (value & ENTITY_COLLISION_MASK_DEFAULT)) {
+            _CollisionMask = (value & ENTITY_COLLISION_MASK_DEFAULT);
             _dirtyFlags |= Simulation::DIRTY_COLLISION_GROUP;
         }
     });
@@ -1687,46 +1654,16 @@ void EntityItem::setDynamic(bool value) {
         withWriteLock([&] {
             // dynamic and STATIC_MESH are incompatible so we check for that case
             if (value && getShapeType() == SHAPE_TYPE_STATIC_MESH) {
-                if (_dynamic) {
-                    _dynamic = false;
+                if (_Dynamic) {
+                    _Dynamic = false;
                     _dirtyFlags |= Simulation::DIRTY_MOTION_TYPE;
                 }
             } else {
-                _dynamic = value;
+                _Dynamic = value;
                 _dirtyFlags |= Simulation::DIRTY_MOTION_TYPE;
             }
         });
     }
-}
-
-void EntityItem::setRestitution(float value) {
-    float clampedValue = glm::max(glm::min(ENTITY_ITEM_MAX_RESTITUTION, value), ENTITY_ITEM_MIN_RESTITUTION);
-    withWriteLock([&] {
-        if (_restitution != clampedValue) {
-            _restitution = clampedValue;
-            _dirtyFlags |= Simulation::DIRTY_MATERIAL;
-        }
-    });
-
-}
-
-void EntityItem::setFriction(float value) {
-    float clampedValue = glm::max(glm::min(ENTITY_ITEM_MAX_FRICTION, value), ENTITY_ITEM_MIN_FRICTION);
-    withWriteLock([&] {
-        if (_friction != clampedValue) {
-            _friction = clampedValue;
-            _dirtyFlags |= Simulation::DIRTY_MATERIAL;
-        }
-    });
-}
-
-void EntityItem::setLifetime(float value) {
-    withWriteLock([&] {
-        if (_lifetime != value) {
-            _lifetime = value;
-            _dirtyFlags |= Simulation::DIRTY_LIFETIME;
-        }
-    });
 }
 
 void EntityItem::setCreated(quint64 value) {
@@ -1739,7 +1676,7 @@ void EntityItem::setCreated(quint64 value) {
 }
 
 void EntityItem::computeCollisionGroupAndFinalMask(int16_t& group, int16_t& mask) const {
-    if (_collisionless) {
+    if (_Collisionless) {
         group = BULLET_COLLISION_GROUP_COLLISIONLESS;
         mask = 0;
     } else {
@@ -2037,7 +1974,7 @@ void EntityItem::deserializeActionsInternal() {
                 static QString repeatedMessage =
                     LogHandler::getInstance().addRepeatedMessageRegex(".*action creation failed for.*");
                 qCDebug(entities) << "EntityItem::deserializeActionsInternal -- action creation failed for"
-                        << getID() << _name; // getName();
+                        << getID() << getName();
                 removeActionInternal(actionID, nullptr);
             }
         }
@@ -2139,7 +2076,7 @@ const QByteArray EntityItem::getDynamicDataInternal() const {
     return _allActionsDataCache;
 }
 
-const QByteArray EntityItem::getDynamicData() const {
+QByteArray EntityItem::getDynamicData() const {
     QByteArray result;
 
     if (_dynamicDataDirty) {
@@ -2349,28 +2286,6 @@ void EntityItem::requiresRecalcBoxes() {
     });
 }
 
-QString EntityItem::getHref() const {
-    QString result;
-    withReadLock([&] {
-        result = _href;
-    });
-    return result;
-}
-
-QString EntityItem::getDescription() const {
-    QString result;
-    withReadLock([&] {
-        result = _description;
-    });
-    return result;
-}
-
-void EntityItem::setDescription(const QString& value) {
-    withWriteLock([&] {
-        _description = value;
-    });
-}
-
 float EntityItem::getLocalRenderAlpha() const {
     float result;
     withReadLock([&] {
@@ -2383,14 +2298,6 @@ void EntityItem::setLocalRenderAlpha(float localRenderAlpha) {
     withWriteLock([&] {
         _localRenderAlpha = localRenderAlpha;
     });
-}
-
-glm::vec3 EntityItem::getGravity() const {
-    glm::vec3 result;
-    withReadLock([&] {
-        result = _gravity;
-    });
-    return result;
 }
 
 glm::vec3 EntityItem::getAcceleration() const {
@@ -2407,73 +2314,12 @@ void EntityItem::setAcceleration(const glm::vec3& value) {
     });
 }
 
-float EntityItem::getDamping() const {
-    float result;
-    withReadLock([&] {
-        result = _damping;
-    });
-    return result;
-}
-
-float EntityItem::getRestitution() const {
-    float result;
-    withReadLock([&] {
-        result = _restitution;
-    });
-    return result;
-}
-
-float EntityItem::getFriction() const {
-    float result;
-    withReadLock([&] {
-        result = _friction;
-    });
-    return result;
-}
-
-// lifetime related properties.
-float EntityItem::getLifetime() const {
-    float result;
-    withReadLock([&] {
-        result = _lifetime;
-    });
-    return result;
-}
-
 quint64 EntityItem::getCreated() const {
     quint64 result;
     withReadLock([&] {
         result = _created;
     });
     return result;
-}
-
-QString EntityItem::getScript() const {
-    QString result;
-    withReadLock([&] {
-        result = _script;
-    });
-    return result;
-}
-
-void EntityItem::setScript(const QString& value) {
-    withWriteLock([&] {
-        _script = value;
-    });
-}
-
-quint64 EntityItem::getScriptTimestamp() const {
-    quint64 result;
-    withReadLock([&] {
-        result = _scriptTimestamp;
-    });
-    return result;
-}
-
-void EntityItem::setScriptTimestamp(const quint64 value) {
-    withWriteLock([&] {
-        _scriptTimestamp = value;
-    });
 }
 
 QString EntityItem::getServerScripts() const {
@@ -2484,48 +2330,10 @@ QString EntityItem::getServerScripts() const {
     return result;
 }
 
-void EntityItem::setServerScripts(const QString& serverScripts) {
+void EntityItem::setServerScripts(QString serverScripts) {
     withWriteLock([&] {
         _serverScripts = serverScripts;
         _serverScriptsChangedTimestamp = usecTimestampNow();
-    });
-}
-
-QString EntityItem::getCollisionSoundURL() const {
-    QString result;
-    withReadLock([&] {
-        result = _collisionSoundURL;
-    });
-    return result;
-}
-
-glm::vec3 EntityItem::getRegistrationPoint() const {
-    glm::vec3 result;
-    withReadLock([&] {
-        result = _registrationPoint;
-    });
-    return result;
-}
-
-float EntityItem::getAngularDamping() const {
-    float result;
-    withReadLock([&] {
-        result = _angularDamping;
-    });
-    return result;
-}
-
-QString EntityItem::getName() const {
-    QString result;
-    withReadLock([&] {
-        result = _name;
-    });
-    return result;
-}
-
-void EntityItem::setName(const QString& value) {
-    withWriteLock([&] {
-        _name = value;
     });
 }
 
@@ -2537,40 +2345,11 @@ QString EntityItem::getDebugName() {
     return result;
 }
 
-bool EntityItem::getVisible() const {
-    bool result;
-    withReadLock([&] {
-        result = _visible;
-    });
-    return result;
-}
-
-void EntityItem::setVisible(bool value) {
-    withWriteLock([&] {
-        _visible = value;
-    });
-}
-
 bool EntityItem::isChildOfMyAvatar() const {
     QUuid ancestorID = findAncestorOfType(NestableType::Avatar);
     return !ancestorID.isNull() && (ancestorID == Physics::getSessionUUID() || ancestorID == AVATAR_SELF_ID);
 }
 
-bool EntityItem::getCollisionless() const {
-    bool result;
-    withReadLock([&] {
-        result = _collisionless;
-    });
-    return result;
-}
-
-uint8_t EntityItem::getCollisionMask() const {
-    uint8_t result;
-    withReadLock([&] {
-        result = _collisionMask;
-    });
-    return result;
-}
 
 bool EntityItem::getDynamic() const {
     if (SHAPE_TYPE_STATIC_MESH == getShapeType()) {
@@ -2578,15 +2357,7 @@ bool EntityItem::getDynamic() const {
     }
     bool result;
     withReadLock([&] {
-        result = _dynamic;
-    });
-    return result;
-}
-
-bool EntityItem::getLocked() const {
-    bool result;
-    withReadLock([&] {
-        result = _locked;
+        result = _Dynamic;
     });
     return result;
 }
@@ -2594,8 +2365,8 @@ bool EntityItem::getLocked() const {
 void EntityItem::setLocked(bool value) {
     bool changed { false };
     withWriteLock([&] {
-        if (_locked != value) {
-            _locked = value;
+        if (_Locked != value) {
+            _Locked = value;
             changed = true;
         }
     });
@@ -2607,48 +2378,6 @@ void EntityItem::setLocked(bool value) {
         }
     }
 }
-
-QString EntityItem::getUserData() const {
-    QString result;
-    withReadLock([&] {
-        result = _userData;
-    });
-    return result;
-}
-
-void EntityItem::setUserData(const QString& value) {
-    withWriteLock([&] {
-        _userData = value;
-    });
-}
-
-// Certifiable Properties
-#define DEFINE_PROPERTY_GETTER(type, accessor, var) \
-type EntityItem::get##accessor() const {            \
-    type result;         \
-    withReadLock([&] {   \
-        result = _##var; \
-    });                  \
-    return result;       \
-}
-
-#define DEFINE_PROPERTY_SETTER(type, accessor, var)   \
-void EntityItem::set##accessor(const type & value) { \
-    withWriteLock([&] {                               \
-       _##var = value;                                \
-    });                                               \
-}
-#define DEFINE_PROPERTY_ACCESSOR(type, accessor, var) DEFINE_PROPERTY_GETTER(type, accessor, var) DEFINE_PROPERTY_SETTER(type, accessor, var)
-DEFINE_PROPERTY_ACCESSOR(QString, ItemName, itemName)
-DEFINE_PROPERTY_ACCESSOR(QString, ItemDescription, itemDescription)
-DEFINE_PROPERTY_ACCESSOR(QString, ItemCategories, itemCategories)
-DEFINE_PROPERTY_ACCESSOR(QString, ItemArtist, itemArtist)
-DEFINE_PROPERTY_ACCESSOR(QString, ItemLicense, itemLicense)
-DEFINE_PROPERTY_ACCESSOR(quint32, LimitedRun, limitedRun)
-DEFINE_PROPERTY_ACCESSOR(QString, MarketplaceID, marketplaceID)
-DEFINE_PROPERTY_ACCESSOR(quint32, EditionNumber, editionNumber)
-DEFINE_PROPERTY_ACCESSOR(quint32, EntityInstanceNumber, entityInstanceNumber)
-DEFINE_PROPERTY_ACCESSOR(QString, CertificateID, certificateID)
 
 uint32_t EntityItem::getDirtyFlags() const {
     uint32_t result;
@@ -2669,14 +2398,6 @@ void EntityItem::clearDirtyFlags(uint32_t mask) {
     withWriteLock([&] {
         _dirtyFlags &= ~mask;
     });
-}
-
-float EntityItem::getDensity() const {
-    float result;
-    withReadLock([&] {
-        result = _density;
-    });
-    return result;
 }
 
 EntityItem::ChangeHandlerId EntityItem::registerChangeHandler(const ChangeHandlerCallback& handler) {
