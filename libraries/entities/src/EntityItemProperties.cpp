@@ -2833,14 +2833,16 @@ void EntityItemProperties::markAllChanged() {
     _colorSpreadChanged = true;
     _alphaSpreadChanged = true;
 
-    // Only mark the following as changed if their values are specified in the properties when the particle is created. If their
-    // values are specified then they are marked as changed in getChangedProperties().
-    //_radiusStartChanged = true;
-    //_radiusFinishChanged = true;
-    //_colorStartChanged = true;
-    //_colorFinishChanged = true;
-    //_alphaStartChanged = true;
-    //_alphaFinishChanged = true;
+    // WARNING: in this PR https://github.com/highfidelity/hifi/pull/5941 we removed the normal behavior of marking these properties
+    //          as changed. I am not sure what the bug that was fixed by that PR was supposed to be. But by not marking these properties
+    //          as true, we broke the normal import/export/copy/paste behavior of these properties. I am migrating these back to the
+    //          normal paradigm.
+    _radiusStartChanged = true;
+    _radiusFinishChanged = true;
+    _colorStartChanged = true;
+    _colorFinishChanged = true;
+    _alphaStartChanged = true;
+    _alphaFinishChanged = true;
 
     _materialURLChanged = true;
     _materialMappingModeChanged = true;
